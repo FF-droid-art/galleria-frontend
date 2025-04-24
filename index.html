@@ -61,7 +61,7 @@
         const div = document.createElement("div");
         div.className = "profile";
         div.innerHTML = `
-          <img src="${profile.imageUrl}" alt="${profile.name}" />
+          <img src="https://galleria-profilo.onrender.com${profile.imageUrl}" alt="${profile.name}" />
           <div><strong>${profile.name}</strong></div>
           <div>${profile.birthdate}</div>
           <button onclick="editProfile('${profile.id}', '${profile.name}', '${profile.birthdate}')">Modifica</button>
