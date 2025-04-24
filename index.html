@@ -67,7 +67,6 @@
       border-radius: 0.5rem;
     }
 
-    /* Dancing GIFs */
     .gif-bg {
       position: fixed;
       bottom: 0;
@@ -87,10 +86,61 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-15px); }
     }
+
+    .falling-gifs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .falling-gif {
+      position: absolute;
+      top: -150px;
+      animation: fall 10s linear infinite;
+      height: 100px;
+      opacity: 0.8;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0);
+        opacity: 0.9;
+      }
+      100% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 500px) {
+      body {
+        margin: 1rem;
+      }
+      form, .edit-form {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>🎉 Galleria Profili Party 🎉</h1>
+
+  <!-- 🎶 Musica di sottofondo -->
+  <audio id="bg-music" autoplay loop>
+    <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/KieLoKaz/Free_Times_Vol_1/KieLoKaz_-_07_-_Hesitation.mp3" type="audio/mpeg">
+    Il tuo browser non supporta l'audio HTML5.
+  </audio>
+
+  <!-- 🔘 Controllo musica -->
+  <div style="text-align: center; margin-top: 1rem;">
+    <button onclick="toggleMusic()" style="padding: 0.5rem 1rem; font-size: 1rem;">
+      ⏸️ Pausa Musica
+    </button>
+  </div>
+
   <form id="profile-form">
     <input type="text" name="name" placeholder="Nome" required />
     <input type="date" name="birthdate" required />
@@ -100,11 +150,20 @@
 
   <div class="gallery" id="gallery"></div>
 
-  <!-- Dancing GIFs background -->
+  <!-- 🎊 Dancing GIFs background -->
   <div class="gif-bg">
     <img src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif" alt="Snoop dancing">
     <img src="https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif" alt="Party dance">
     <img src="https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif" alt="Pikachu dance">
+  </div>
+
+  <!-- 🎉 GIF che cascano dall’alto -->
+  <div class="falling-gifs">
+    <img class="falling-gif" src="https://media.giphy.com/media/sIIhZliB2McAo/giphy.gif" style="left: 10%;" alt="Nyan Cat" />
+    <img class="falling-gif" src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif" style="left: 30%; animation-delay: 3s;" alt="Snoop Dancing" />
+    <img class="falling-gif" src="https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif" style="left: 50%; animation-delay: 6s;" alt="Cool Party" />
+    <img class="falling-gif" src="https://media.giphy.com/media/j5QcmXoFWl9yQ/giphy.gif" style="left: 70%; animation-delay: 1s;" alt="Happy Dance" />
+    <img class="falling-gif" src="https://media.giphy.com/media/l0MYB8Ory7Hqefo9a/giphy.gif" style="left: 90%; animation-delay: 5s;" alt="Stars Falling" />
   </div>
 
   <script>
@@ -155,7 +214,9 @@
         const formData = new FormData();
         formData.append("name", name);
         formData.append("birthdate", birthdate);
-        formData.append("image", fileInput.files[0]);
+        if (fileInput.files[0]) {
+          formData.append("image", fileInput.files[0]);
+        }
         const res = await fetch(`https://galleria-profilo.onrender.com/profiles/${id}`, {
           method: "PUT",
           body: formData
@@ -180,6 +241,21 @@
           alert("Errore durante la cancellazione.");
         }
       }
+    }
+
+    // 🔊 Controllo musica
+    let isPlaying = true;
+    function toggleMusic() {
+      const audio = document.getElementById("bg-music");
+      const btn = document.querySelector("button[onclick='toggleMusic()']");
+      if (isPlaying) {
+        audio.pause();
+        btn.textContent = "▶️ Riprendi Musica";
+      } else {
+        audio.play();
+        btn.textContent = "⏸️ Pausa Musica";
+      }
+      isPlaying = !isPlaying;
     }
 
     fetchProfiles();
