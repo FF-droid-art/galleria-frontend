@@ -129,7 +129,7 @@
   <h1>🎉 Galleria Profili Party 🎉</h1>
 
   <!-- 🎶 Musica di sottofondo -->
-  <audio id="bg-music" autoplay loop>
+  <audio id="bg-music" loop>
     <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/KieLoKaz/Free_Times_Vol_1/KieLoKaz_-_07_-_Hesitation.mp3" type="audio/mpeg">
     Il tuo browser non supporta l'audio HTML5.
   </audio>
@@ -137,7 +137,7 @@
   <!-- 🔘 Controllo musica -->
   <div style="text-align: center; margin-top: 1rem;">
     <button onclick="toggleMusic()" style="padding: 0.5rem 1rem; font-size: 1rem;">
-      ⏸️ Pausa Musica
+      ▶️ Avvia Musica
     </button>
   </div>
 
@@ -207,26 +207,32 @@
     async function editProfile(id, currentName, currentDate) {
       const name = prompt("Modifica nome:", currentName);
       const birthdate = prompt("Modifica data di nascita (YYYY-MM-DD):", currentDate);
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("birthdate", birthdate);
+
       const fileInput = document.createElement("input");
       fileInput.type = "file";
       fileInput.accept = "image/*";
+
       fileInput.onchange = async () => {
-        const formData = new FormData();
-        formData.append("name", name);
-        formData.append("birthdate", birthdate);
-        if (fileInput.files[0]) {
+        if (fileInput.files.length > 0) {
           formData.append("image", fileInput.files[0]);
         }
+
         const res = await fetch(`https://galleria-profilo.onrender.com/profiles/${id}`, {
           method: "PUT",
           body: formData
         });
+
         if (res.ok) {
           fetchProfiles();
         } else {
-          alert("Errore durante la modifica.");
+          alert("Errore durante la modifica del profilo.");
         }
       };
+
       fileInput.click();
     }
 
@@ -243,17 +249,17 @@
       }
     }
 
-    // 🔊 Controllo musica
-    let isPlaying = true;
+    // 🎵 Controllo musica (parte solo dopo interazione)
+    let isPlaying = false;
     function toggleMusic() {
       const audio = document.getElementById("bg-music");
       const btn = document.querySelector("button[onclick='toggleMusic()']");
-      if (isPlaying) {
-        audio.pause();
-        btn.textContent = "▶️ Riprendi Musica";
-      } else {
+      if (!isPlaying) {
         audio.play();
         btn.textContent = "⏸️ Pausa Musica";
+      } else {
+        audio.pause();
+        btn.textContent = "▶️ Riprendi Musica";
       }
       isPlaying = !isPlaying;
     }
