@@ -67,26 +67,6 @@
       border-radius: 0.5rem;
     }
 
-    .gif-bg {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100vw;
-      z-index: -1;
-      pointer-events: none;
-    }
-
-    .gif-bg img {
-      height: 150px;
-      margin: 0 20px;
-      animation: float 4s infinite ease-in-out;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
-
     .falling-gifs {
       position: fixed;
       top: 0;
@@ -149,13 +129,6 @@
   </form>
 
   <div class="gallery" id="gallery"></div>
-
-  <!-- 🎊 Dancing GIFs background -->
-  <div class="gif-bg">
-    <img src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif" alt="Snoop dancing">
-    <img src="https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif" alt="Party dance">
-    <img src="https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif" alt="Pikachu dance">
-  </div>
 
   <!-- 🎉 GIF che cascano dall’alto -->
   <div class="falling-gifs">
@@ -249,7 +222,6 @@
       }
     }
 
-    // 🎵 Controllo musica (parte solo dopo interazione)
     let isPlaying = false;
     function toggleMusic() {
       const audio = document.getElementById("bg-music");
