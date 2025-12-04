@@ -1,513 +1,820 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Galleria Profili - Party Edition</title>
+  <meta charset="utf-8">
+  <title>Galleria Profili Party</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    :root {
+      --bg1:#ff9a9e;
+      --bg2:#fad0c4;
+      --bg3:#fad0c4;
+    }
+    * {
+      box-sizing:border-box;
+    }
     body {
-      font-family: sans-serif;
-      margin: 2rem;
-      animation: rainbow 10s infinite linear;
-      background-size: 400% 400%;
-      position: relative;
-      overflow-x: hidden;
+      margin:0;
+      padding:2rem 1rem 3rem;
+      min-height:100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.2), transparent 55%), linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:#fff;
+      text-align:center;
     }
-
-    @keyframes rainbow {
-      0% { background-color: #ff0000; }
-      20% { background-color: #ffa500; }
-      40% { background-color: #ffff00; }
-      60% { background-color: #00ff00; }
-      80% { background-color: #0000ff; }
-      100% { background-color: #8a2be2; }
-    }
-
     h1 {
-      text-align: center;
-      color: white;
-      text-shadow: 2px 2px 5px black;
+      margin:0 0 0.5rem;
+      text-shadow:0 0 10px rgba(0,0,0,0.6);
+    }
+    .subtitle{
+      margin:0 0 1rem;
+      opacity:0.85;
+    }
+    .controls{
+      margin-bottom:1rem;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:0.5rem;
+    }
+    button{
+      border:none;
+      border-radius:999px;
+      padding:0.5rem 1rem;
+      font-size:0.95rem;
+      font-weight:600;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(0,0,0,0.25);
+      background:rgba(255,255,255,0.9);
+      color:#222;
+    }
+    button:active{
+      transform:translateY(1px);
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    }
+    form{
+      margin:0 auto 1rem;
+      max-width:700px;
+      background:rgba(0,0,0,0.35);
+      padding:1rem;
+      border-radius:1rem;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:0.5rem;
+    }
+    input[type="text"],
+    input[type="date"],
+    input[type="file"]{
+      border-radius:0.6rem;
+      border:none;
+      padding:0.5rem 0.75rem;
+      min-width:150px;
+    }
+    #status{
+      min-height:1.2em;
+      font-weight:600;
+      margin-bottom:1rem;
+      text-shadow:0 0 6px rgba(0,0,0,0.8);
+    }
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+      gap:1rem;
+      margin-top:1rem;
+      justify-items:center;
+    }
+    .profile{
+      text-align:center;
+      background:rgba(255,255,255,0.9);
+      color:#222;
+      padding:0.75rem;
+      border-radius:1rem;
+      box-shadow:0 0 10px rgba(0,0,0,0.4);
+      max-width:220px;
+    }
+    .profile img{
+      max-width:100%;
+      height:auto;
+      border-radius:0.75rem;
+      cursor:pointer;
+      box-shadow:0 0 6px rgba(0,0,0,0.4);
+    }
+    .profile-name{
+      margin-top:0.5rem;
+      font-weight:700;
+    }
+    .profile-date{
+      font-size:0.85rem;
+      opacity:0.8;
+      margin-bottom:0.4rem;
+    }
+    .profile-actions{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:0.4rem;
+    }
+    .profile-actions button{
+      box-shadow:none;
+      padding:0.35rem 0.6rem;
+      font-size:0.8rem;
     }
 
-    form, .edit-form {
-      max-width: 400px;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1rem;
-      border-radius: 1rem;
+    .falling-gifs{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100vw;
+      height:100vh;
+      pointer-events:none;
+      z-index:3;
+      overflow:hidden;
+    }
+    .falling-gif{
+      position:absolute;
+      top:-160px;
+      height:130px;
+      opacity:0.9;
+      filter:drop-shadow(0 0 10px rgba(0,0,0,0.7));
+      animation-name:fall;
+      animation-timing-function:linear;
+      animation-iteration-count:infinite;
+    }
+    @keyframes fall{
+      0%{ transform:translateY(0); opacity:1; }
+      100%{ transform:translateY(110vh); opacity:0; }
     }
 
-    input, button {
-      padding: 0.5rem;
-      font-size: 1rem;
+    #photo-modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.75);
+      z-index:5;
+      align-items:center;
+      justify-content:center;
+      padding:1rem;
+    }
+    #photo-modal-inner{
+      position:relative;
+      max-width:90vw;
+      max-height:90vh;
+    }
+    #photo-modal img{
+      max-width:100%;
+      max-height:80vh;
+      border-radius:1rem;
+      box-shadow:0 0 15px rgba(0,0,0,0.8);
+    }
+    #photo-modal-caption{
+      margin-top:0.5rem;
+      color:#fff;
+      text-align:center;
+    }
+    #photo-modal-close{
+      position:absolute;
+      top:-10px;
+      right:-10px;
+      border:none;
+      border-radius:50%;
+      width:32px;
+      height:32px;
+      cursor:pointer;
+      background:#fff;
+      box-shadow:0 0 8px rgba(0,0,0,0.7);
     }
 
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 3rem;
-      justify-items: center;
+    #surprise-overlay{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      font-size:2.1rem;
+      font-weight:800;
+      color:#fff;
+      text-shadow:0 0 18px #000;
+      background:radial-gradient(circle, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.8) 80%);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.25s ease;
+      z-index:6;
+    }
+    #surprise-overlay.active{
+      opacity:1;
+    }
+    .confetto{
+      position:absolute;
+      width:14px;
+      height:24px;
+      border-radius:4px;
+      opacity:0;
+      animation-name:confetti;
+      animation-duration:1.8s;
+      animation-timing-function:ease-out;
+      animation-fill-mode:forwards;
+      mix-blend-mode:screen;
+    }
+    @keyframes confetti{
+      0%{ transform:translateY(0) rotate(0deg) scale(1); opacity:1;}
+      80%{ opacity:1;}
+      100%{ transform:translateY(180px) rotate(540deg) scale(0.7); opacity:0;}
     }
 
-    .profile {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.85);
-      padding: 1rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 10px #00000055;
-    }
-
-    .profile img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 0.5rem;
-    }
-
-    .falling-gifs {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      pointer-events: none;
-      z-index: 3;
-      mix-blend-mode: normal;
-      overflow: hidden;
-    }
-
-    .falling-gif {
-      position: absolute;
-      top: -180px;
-      animation: fall 9s linear infinite;
-      height: 140px;
-      opacity: 0.95;
-      filter: drop-shadow(0 0 8px #ffffffcc);
-    }
-
-    #surprise-overlay {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #fff;
-      text-shadow: 0 0 18px #000;
-      background: radial-gradient(circle, #00000040 0%, #000000d0 80%);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      z-index: 4;
-    }
-
-    #surprise-overlay.active {
-      opacity: 1;
-    }
-
-    .confetto {
-      position: absolute;
-      width: 14px;
-      height: 24px;
-      border-radius: 4px;
-      opacity: 0;
-      animation: confetti 1.8s ease-out forwards;
-      mix-blend-mode: screen;
-    }
-
-    @keyframes confetti {
-      0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-      80% { opacity: 1; }
-      100% { transform: translateY(180px) rotate(540deg) scale(0.7); opacity: 0; }
-    }
-
-    @keyframes fall {
-      0% {
-        transform: translateY(0);
-        opacity: 0.9;
+    @media (max-width:600px){
+      body{
+        padding:1.5rem 0.75rem 2.5rem;
       }
-      100% {
-        transform: translateY(100vh);
-        opacity: 0;
+      form{
+        flex-direction:column;
+        align-items:stretch;
       }
-    }
-
-    @media (max-width: 500px) {
-      body {
-        margin: 1rem;
-      }
-      form, .edit-form {
-        width: 100%;
+      input[type="text"],
+      input[type="date"],
+      input[type="file"]{
+        width:100%;
       }
     }
   </style>
 </head>
 <body>
   <h1>🎉 Galleria Profili Party 🎉</h1>
+  <p class="subtitle">Carica una foto, dai un nome e una data, e guarda la tua galleria in modalità party (anche offline).</p>
 
-  <!-- 🎶 Musica di sottofondo -->
+  <div class="controls">
+    <button id="music-btn" type="button">▶️ Avvia Musica</button>
+    <button id="gif-btn" type="button">✨ Ricarica GIF</button>
+    <button id="surprise-btn" type="button">🎁 Sorpresa</button>
+  </div>
+
   <audio id="bg-music" loop>
     <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/KieLoKaz/Free_Times_Vol_1/KieLoKaz_-_07_-_Hesitation.mp3" type="audio/mpeg">
     Il tuo browser non supporta l'audio HTML5.
   </audio>
 
-  <!-- 🔘 Controllo musica -->
-  <div style="text-align: center; margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-    <button id="music-btn" type="button" onclick="toggleMusic()" style="padding: 0.5rem 1rem; font-size: 1rem;">
-      ▶️ Avvia Musica
-    </button>
-    <button id="gif-btn" type="button" style="padding: 0.5rem 1rem; font-size: 1rem;" onclick="restartGifs()">✨ Mostra GIF</button>
-  </div>
-
   <form id="profile-form">
-    <input type="text" name="name" placeholder="Nome" required />
-    <input type="date" name="birthdate" required />
-    <input type="file" name="image" accept="image/*" required />
+    <input type="text" name="name" placeholder="Nome" required>
+    <input type="date" name="birthdate" required>
+    <input type="file" name="image" accept="image/*" required>
     <button type="submit">Carica</button>
   </form>
 
-  <div style="text-align: center; margin-top: 1rem;">
-    <button id="surprise-btn" type="button" style="padding: 0.5rem 1rem; font-size: 1rem;">🎁 Sorpresa</button>
-  </div>
-
-  <p id="status" style="text-align: center; color: white; font-weight: bold;"></p>
+  <p id="status"></p>
 
   <div class="gallery" id="gallery"></div>
 
-  <!-- 🎉 GIF che cascano dall’alto -->
   <div class="falling-gifs" id="falling-container"></div>
 
-  <!-- 🖼️ Zoom foto -->
-  <div id="photo-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:5; align-items:center; justify-content:center; padding:1rem;">
-    <div style="position:relative; max-width:90vw; max-height:90vh;">
-      <button aria-label="Chiudi" onclick="closeModal()" style="position:absolute; top:-10px; right:-10px; background:#fff; border:none; border-radius:50%; width:34px; height:34px; box-shadow:0 0 8px #0008;">✖️</button>
-      <img id="modal-img" src="" alt="" style="max-width:100%; max-height:80vh; border-radius:1rem; box-shadow:0 0 12px #0009;" />
-      <div id="modal-caption" style="text-align:center; color:white; margin-top:0.5rem; font-size:1.1rem;"></div>
+  <div id="photo-modal">
+    <div id="photo-modal-inner">
+      <button id="photo-modal-close" aria-label="Chiudi">✖️</button>
+      <img id="photo-modal-img" src="" alt="">
+      <div id="photo-modal-caption"></div>
     </div>
   </div>
 
   <div id="surprise-overlay" aria-live="polite"></div>
 
   <script>
-    const BASE_URL = "https://galleria-profilo.onrender.com";
-    const CACHE_KEY = "galleria-profiles-cache";
-    const FALLBACK_TILE = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%23ff00ff'/%3E%3Cstop offset='1' stop-color='%2300ffff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23g)' rx='28'/%3E%3Ctext x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='sans-serif' fill='white'%3EGIF%3C/text%3E%3C/svg%3E";
-    const INLINE_SNOOP = "data:image/gif;base64,R0lGODlhZABkAMQfAP//AP/MAP/LAP/KAP/JAP/GAP/EAOzZAP7uAP7sAP7rAP7qAP3oAPnmAPj+cAPfZAPTYAPDVAPDSAOTKAMzFAL+uAL2kAK2ZAI6IAH2BAGp9AF9zAE9mADdXACH5BAEAAB8ALAAAAGMAZAAAIw+HBIHEiwoMGDCBMqXMiwocOHECNKnEixosWLGDNq3Mix48ePIEOKHGkyJCHRlCkW+IIiTJuyYkOGjw48ZPGiSZMmTJkypGjx48eQI0q9mTopMmTKFMWu9Zn0FypkxZM6rVq0qdSrWqVevYtGmzp8+fQIMq/aq1q9evYMOKHUu2bN26FdeuXMmzp8+fQIMq3cu3at0kdG3cs0O//2LNu3crXcvXgwYMGCiwocOHECNKnEixosWLGDNq3Mix48ePIEOKnEmzps6fQIMqXEm0qtSrUq1q3cq1K9evYMOK3Em3bt26dOrXEm3bt33w48efiwo0qNEixosWLGDNq3Mix48ePIEOKnEmzps2bNnKv0/ebdGzZubNmzZs2bNmyZ2Wo2bNmzZv4nAgA7";
-    const GIFS = [
-      { src: INLINE_SNOOP, alt: "Snoop Dogg party" },
-      { src: "https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif", alt: "Confetti" },
-      { src: "https://media.giphy.com/media/26FPqut4z4So4gDOU/giphy.gif", alt: "Boom box dance" },
-      { src: "https://media.giphy.com/media/3o7aD4VDkp0vN9XXoQ/giphy.gif", alt: "Laser lights" },
-      { src: "https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif", alt: "Funky dab" }
-    ];
+    (function () {
+      "use strict";
 
-    function setStatus(message, isError = false) {
-      const status = document.getElementById("status");
-      status.textContent = message;
-      status.style.color = isError ? "#ffdddd" : "#ddffdd";
-    }
+      var BASE_URL = "https://galleria-profilo.onrender.com";
+      var CACHE_KEY = "galleria-profiles-cache";
 
-    function loadCachedProfiles() {
-      try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        return cached ? JSON.parse(cached) : [];
-      } catch (err) {
-        console.error("Errore nel leggere la cache", err);
+      // GIF inline di Snoop (fallback sicuro, sempre disponibile)
+      var INLINE_SNOOP = "data:image/gif;base64,R0lGODlhZABkAMQfAP//AP/MAP/LAP/KAP/JAP/GAP/EAOzZAP7uAP7sAP7rAP7qAP3oAPnmAPj+cAPfZAPTYAPDVAPDSAOTKAMzFAL+uAL2kAK2ZAI6IAH2BAGp9AF9zAE9mADdXACH5BAEAAB8ALAAAAGMAZAAAIw+HBIHEiwoMGDCBMqXMiwocOHECNKnEixosWLGDNq3Mix48ePIEOKHGkyJCHRlCkW+IIiTJuyYkOGjw48ZPGiSZMmTJkypGjx48eQI0q9mTopMmTKFMWu9Zn0FypkxZM6rVq0qdSrWqVevYtGmzp8+fQIMq/aq1q9evYMOKHUu2bN26FdeuXMmzp8+fQIMq3cu3at0kdG3cs0O//2LNu3crXcvXgwYMGCiwocOHECNKnEixosWLGDNq3Mix48ePIEOKnEmzps6fQIMqXEm0qtSrUq1q3cq1K9evYMOK3Em3bt26dOrXEm3bt33w48efiwo0qNEixosWLGDNq3Mix48ePIEOKnEmzps2bNnKv0/ebdGzZubNmzZs2bNmyZ2Wo2bNmzZv4nAgA7";
+
+      var GIFS = [
+        { src: INLINE_SNOOP, alt: "Snoop Dogg party" },
+        { src: "https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif", alt: "Confetti" },
+        { src: "https://media.giphy.com/media/26FPqut4z4So4gDOU/giphy.gif", alt: "Boom box dance" },
+        { src: "https://media.giphy.com/media/3o7aD4VDkp0vN9XXoQ/giphy.gif", alt: "Laser lights" },
+        { src: "https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif", alt: "Funky dab" }
+      ];
+
+      var galleryEl = document.getElementById("gallery");
+      var statusEl = document.getElementById("status");
+      var musicBtn = document.getElementById("music-btn");
+      var gifBtn = document.getElementById("gif-btn");
+      var surpriseBtn = document.getElementById("surprise-btn");
+      var audioEl = document.getElementById("bg-music");
+      var fallingContainer = document.getElementById("falling-container");
+
+      var photoModal = document.getElementById("photo-modal");
+      var photoModalImg = document.getElementById("photo-modal-img");
+      var photoModalCaption = document.getElementById("photo-modal-caption");
+      var photoModalClose = document.getElementById("photo-modal-close");
+
+      var isPlaying = false;
+
+      function setStatus(message, isError) {
+        statusEl.textContent = message || "";
+        if (isError) {
+          statusEl.style.color = "#ffdddd";
+        } else {
+          statusEl.style.color = "#ddffdd";
+        }
+      }
+
+      function loadCachedProfiles() {
+        try {
+          var raw = localStorage.getItem(CACHE_KEY);
+          if (!raw) return [];
+          var parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (e) {
+          console.error("Errore nel leggere la cache", e);
+        }
         return [];
       }
-    }
 
-    function cacheProfiles(profiles) {
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(profiles));
-      } catch (err) {
-        console.error("Errore nel salvare la cache", err);
-      }
-    }
-
-    function renderProfiles(profiles) {
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      profiles.forEach(profile => {
-        const imgSrc = profile.imageData || `${BASE_URL}${profile.imageUrl}`;
-        const div = document.createElement("div");
-        div.className = "profile";
-        div.innerHTML = `
-          <img src="${imgSrc}" alt="${profile.name}" />
-          <div><strong>${profile.name}</strong></div>
-          <div>${profile.birthdate}</div>
-          <button onclick="editProfile('${profile.id}', '${profile.name}', '${profile.birthdate}')">Modifica</button>
-          <button onclick="deleteProfile('${profile.id}')">❌ Cancella</button>
-        `;
-        div.querySelector("img").addEventListener("click", () => openModal(imgSrc, profile.name));
-        gallery.appendChild(div);
-      });
-    }
-
-    function upsertCachedProfile(profile) {
-      const cached = loadCachedProfiles();
-      const idx = cached.findIndex(p => p.id === profile.id);
-      if (idx >= 0) {
-        cached[idx] = { ...cached[idx], ...profile };
-      } else {
-        cached.unshift(profile);
-      }
-      cacheProfiles(cached);
-      renderProfiles(cached);
-    }
-
-    async function fetchProfiles() {
-      try {
-        const res = await fetch(`${BASE_URL}/profiles`);
-        if (res.status === 404) throw new Error("404");
-        if (!res.ok) throw new Error("Richiesta non riuscita");
-        const profiles = await res.json();
-        const cached = loadCachedProfiles();
-        const merged = profiles.map(p => {
-          const cachedProfile = cached.find(c => c.id === p.id);
-          return cachedProfile && cachedProfile.imageData ? { ...p, imageData: cachedProfile.imageData } : p;
-        });
-        cacheProfiles(merged);
-        renderProfiles(merged);
-        setStatus("Profili sincronizzati con il server.");
-      } catch (err) {
-        const cached = loadCachedProfiles();
-        if (cached.length) {
-          renderProfiles(cached);
-          const hint = err?.message === "404" ? "Endpoint /profiles non trovato: controlla BASE_URL o avvia il backend." : "";
-          setStatus(`Server offline: sto mostrando i profili salvati in locale. ${hint}`.trim(), true);
-        } else {
-          const hint = err?.message === "404" ? "Sembra che manchi l'endpoint /profiles: aggiorna BASE_URL o avvia il backend." : "";
-          setStatus(`Errore nel caricamento dei profili. ${hint}`.trim(), true);
-        }
-        console.error(err);
-      }
-    }
-
-    function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    document.getElementById("profile-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
-      const name = formData.get("name");
-      const birthdate = formData.get("birthdate");
-      const imageFile = formData.get("image");
-
-      let imageData;
-      try {
-        imageData = await fileToDataUrl(imageFile);
-      } catch (err) {
-        alert("Errore nel leggere l'immagine.");
-        return;
-      }
-
-      let createdProfile = { id: `local-${Date.now()}`, name, birthdate, imageData };
-
-      try {
-        const res = await fetch(`${BASE_URL}/profiles`, {
-          method: "POST",
-          body: formData
-        });
-
-        if (res.ok) {
-          const savedProfile = await res.json().catch(() => ({}));
-          createdProfile = { ...savedProfile, name, birthdate, imageData };
-          setStatus("Profilo salvato sul server e in locale.");
-          fetchProfiles();
-        } else {
-          const hint = res.status === 404 ? "Assicurati che il backend sia in esecuzione (POST /profiles)." : "";
-          setStatus(`Server (${res.status}). Salvo solo in locale. ${hint}`.trim(), true);
-        }
-      } catch (err) {
-        console.error("Upload fallito", err);
-        setStatus("Server non raggiungibile, profilo salvato solo in locale.", true);
-      }
-
-      upsertCachedProfile(createdProfile);
-      form.reset();
-    });
-
-    async function editProfile(id, currentName, currentDate) {
-      const name = prompt("Modifica nome:", currentName);
-      if (!name) return;
-      const birthdate = prompt("Modifica data di nascita (YYYY-MM-DD):", currentDate);
-      if (!birthdate) return;
-
-      const cachedProfile = loadCachedProfiles().find(p => p.id === id);
-      const cachedImageData = cachedProfile?.imageData;
-      const cachedImageUrl = cachedProfile?.imageUrl;
-
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("birthdate", birthdate);
-
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.accept = "image/*";
-
-      fileInput.onchange = async () => {
-        const cacheUpdate = { id, name, birthdate };
-
-        if (fileInput.files.length > 0) {
-          formData.append("image", fileInput.files[0]);
-          try {
-            const imageData = await fileToDataUrl(fileInput.files[0]);
-            cacheUpdate.imageData = imageData;
-          } catch (err) {
-            console.error("Impossibile aggiornare l'immagine in cache", err);
-          }
-        } else if (cachedImageData) {
-          cacheUpdate.imageData = cachedImageData;
-        } else if (cachedImageUrl) {
-          cacheUpdate.imageUrl = cachedImageUrl;
-        }
-
-        upsertCachedProfile(cacheUpdate);
-
+      function saveCachedProfiles(list) {
         try {
-          const res = await fetch(`${BASE_URL}/profiles/${id}`, {
-            method: "PUT",
-            body: formData
-          });
-
-          if (res.ok) {
-            setStatus("Profilo aggiornato.");
-            fetchProfiles();
-          } else {
-            setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
-          }
-        } catch (err) {
-          setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
-        }
-      };
-
-      fileInput.click();
-    }
-
-    async function deleteProfile(id) {
-      if (confirm("Sei sicuro di voler cancellare questo profilo?")) {
-        const cached = loadCachedProfiles().filter(p => p.id !== id);
-        cacheProfiles(cached);
-        renderProfiles(cached);
-
-        try {
-          const res = await fetch(`${BASE_URL}/profiles/${id}`, {
-            method: "DELETE"
-          });
-          if (res.ok) {
-            setStatus("Profilo eliminato.");
-            fetchProfiles();
-          } else {
-            setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
-          }
-        } catch (err) {
-          setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(list));
+        } catch (e) {
+          console.error("Errore nel salvare la cache", e);
         }
       }
-    }
 
-    let isPlaying = false;
-    function toggleMusic() {
-      const audio = document.getElementById("bg-music");
-      const btn = document.getElementById("music-btn");
-      if (!isPlaying) {
-        audio.play();
-        btn.textContent = "⏸️ Pausa Musica";
-      } else {
-        audio.pause();
-        btn.textContent = "▶️ Riprendi Musica";
+      function upsertCachedProfile(profile) {
+        var list = loadCachedProfiles();
+        var idx = -1;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === profile.id) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx >= 0) {
+          list[idx] = Object.assign({}, list[idx], profile);
+        } else {
+          list.unshift(profile);
+        }
+        saveCachedProfiles(list);
+        renderProfiles(list);
       }
-      isPlaying = !isPlaying;
-    }
 
-    function ensureMusicOnInteraction() {
-      if (isPlaying) return;
-      toggleMusic();
-      document.body.removeEventListener("click", ensureMusicOnInteraction);
-    }
+      function removeCachedProfile(id) {
+        var list = loadCachedProfiles();
+        var filtered = [];
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id !== id) {
+            filtered.push(list[i]);
+          }
+        }
+        saveCachedProfiles(filtered);
+        renderProfiles(filtered);
+      }
 
-    document.body.addEventListener("click", ensureMusicOnInteraction, { once: true });
+      function renderProfiles(profiles) {
+        galleryEl.innerHTML = "";
+        if (!profiles || profiles.length === 0) {
+          return;
+        }
+        for (var i = 0; i < profiles.length; i++) {
+          var p = profiles[i];
+          var card = document.createElement("div");
+          card.className = "profile";
 
-    function createFallingGifs() {
-      const container = document.getElementById("falling-container");
-      container.innerHTML = "";
-      GIFS.forEach((gif, i) => {
-        const img = document.createElement("img");
-        img.className = "falling-gif";
-        img.src = gif.src;
-        img.alt = gif.alt;
-        img.loading = "lazy";
-        img.style.left = `${(i * 18 + 8) % 100}%`;
-        img.style.animationDelay = `${i * 1.3}s`;
-        img.style.animationDuration = `${8 + (i % 3) * 2}s`;
-        img.onerror = () => {
-          img.onerror = null;
-          img.src = FALLBACK_TILE;
+          var img = document.createElement("img");
+          var src = p.imageData;
+          if (!src && p.imageUrl) {
+            src = BASE_URL + p.imageUrl;
+          }
+          img.src = src || INLINE_SNOOP;
+          img.alt = p.name || "Foto profilo";
+          img.setAttribute("data-action", "zoom");
+          img.setAttribute("data-caption", (p.name || "") + (p.birthdate ? " – " + p.birthdate : ""));
+          card.appendChild(img);
+
+          var nameDiv = document.createElement("div");
+          nameDiv.className = "profile-name";
+          nameDiv.textContent = p.name || "(senza nome)";
+          card.appendChild(nameDiv);
+
+          var dateDiv = document.createElement("div");
+          dateDiv.className = "profile-date";
+          dateDiv.textContent = p.birthdate || "";
+          card.appendChild(dateDiv);
+
+          var actions = document.createElement("div");
+          actions.className = "profile-actions";
+
+          var editBtn = document.createElement("button");
+          editBtn.textContent = "✏️ Modifica";
+          editBtn.setAttribute("data-action", "edit");
+          editBtn.setAttribute("data-id", p.id);
+          actions.appendChild(editBtn);
+
+          var delBtn = document.createElement("button");
+          delBtn.textContent = "❌ Cancella";
+          delBtn.setAttribute("data-action", "delete");
+          delBtn.setAttribute("data-id", p.id);
+          actions.appendChild(delBtn);
+
+          card.appendChild(actions);
+          galleryEl.appendChild(card);
+        }
+      }
+
+      function fileToDataUrl(file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { resolve(reader.result); };
+          reader.onerror = function (e) { reject(e); };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function syncFromServer() {
+        setStatus("Sincronizzo con il server...");
+        fetch(BASE_URL + "/profiles")
+          .then(function (res) {
+            if (res.status === 404) {
+              throw new Error("404");
+            }
+            if (!res.ok) {
+              throw new Error("Richiesta non riuscita");
+            }
+            return res.json();
+          })
+          .then(function (serverProfiles) {
+            if (!Array.isArray(serverProfiles)) {
+              serverProfiles = [];
+            }
+            var cached = loadCachedProfiles();
+            var merged = [];
+            for (var i = 0; i < serverProfiles.length; i++) {
+              var sp = serverProfiles[i];
+              var cp = null;
+              for (var j = 0; j < cached.length; j++) {
+                if (cached[j].id === sp.id) {
+                  cp = cached[j];
+                  break;
+                }
+              }
+              if (cp && cp.imageData) {
+                merged.push({
+                  id: sp.id,
+                  name: sp.name || cp.name,
+                  birthdate: sp.birthdate || cp.birthdate,
+                  imageData: cp.imageData,
+                  imageUrl: sp.imageUrl || cp.imageUrl
+                });
+              } else {
+                merged.push(sp);
+              }
+            }
+            saveCachedProfiles(merged);
+            renderProfiles(merged);
+            setStatus("Profili sincronizzati con il server.");
+          })
+          .catch(function (err) {
+            var cached = loadCachedProfiles();
+            if (cached.length > 0) {
+              renderProfiles(cached);
+              var hint1 = "";
+              if (err && err.message === "404") {
+                hint1 = " Endpoint /profiles non trovato: controlla BASE_URL o avvia il backend.";
+              }
+              setStatus("Server offline: sto mostrando i profili salvati in locale." + hint1, true);
+            } else {
+              var hint2 = "";
+              if (err && err.message === "404") {
+                hint2 = " Sembra che manchi l'endpoint /profiles: aggiorna BASE_URL o avvia il backend.";
+              }
+              setStatus("Errore nel caricamento dei profili." + hint2, true);
+            }
+            console.error("Errore syncFromServer", err);
+          });
+      }
+
+      function handleFormSubmit(evt) {
+        evt.preventDefault();
+        var form = evt.target;
+        var formData = new FormData(form);
+        var name = formData.get("name");
+        var birthdate = formData.get("birthdate");
+        var imageFile = formData.get("image");
+
+        if (!imageFile || !imageFile.size) {
+          alert("Seleziona una foto prima di caricare.");
+          return;
+        }
+
+        setStatus("Salvo il profilo...");
+
+        fileToDataUrl(imageFile)
+          .then(function (dataUrl) {
+            var localProfile = {
+              id: "local-" + Date.now(),
+              name: name,
+              birthdate: birthdate,
+              imageData: dataUrl
+            };
+
+            upsertCachedProfile(localProfile);
+            setStatus("Profilo salvato in locale, provo a contattare il server...");
+
+            return fetch(BASE_URL + "/profiles", {
+              method: "POST",
+              body: formData
+            })
+              .then(function (res) {
+                if (res.ok) {
+                  return res.json()
+                    .then(function (saved) {
+                      if (saved && saved.id) {
+                        localProfile.id = saved.id;
+                        localProfile.imageUrl = saved.imageUrl;
+                        upsertCachedProfile(localProfile);
+                      }
+                      setStatus("Profilo salvato anche sul server ✅");
+                      return;
+                    })
+                    .catch(function () {
+                      setStatus("Profilo salvato anche sul server ✅");
+                    });
+                } else {
+                  var hint = "";
+                  if (res.status === 404) {
+                    hint = " Assicurati che il backend supporti POST /profiles.";
+                  }
+                  setStatus("Server (" + res.status + "). Profilo salvato solo in locale." + hint, true);
+                }
+              })
+              .catch(function (err) {
+                console.error("Upload fallito", err);
+                setStatus("Server non raggiungibile, profilo salvato solo in locale.", true);
+              });
+          })
+          .catch(function () {
+            alert("Errore nel leggere l'immagine.");
+          })
+          .finally(function () {
+            form.reset();
+          });
+      }
+
+      function editProfile(id) {
+        var cached = loadCachedProfiles();
+        var current = null;
+        for (var i = 0; i < cached.length; i++) {
+          if (cached[i].id === id) {
+            current = cached[i];
+            break;
+          }
+        }
+        if (!current) {
+          return;
+        }
+
+        var newName = window.prompt("Modifica nome:", current.name || "");
+        if (newName === null) return;
+        var newDate = window.prompt("Modifica data di nascita (YYYY-MM-DD):", current.birthdate || "");
+        if (newDate === null) return;
+
+        var updated = {
+          id: id,
+          name: newName,
+          birthdate: newDate
         };
-        img.onload = () => img.style.opacity = "0.97";
-        container.appendChild(img);
-      });
-    }
 
-    function restartGifs() {
-      createFallingGifs();
-      setStatus("GIF ricaricate con la cascata in evidenza.");
-    }
+        var fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
 
-    function sprinkleConfetti() {
-      const overlay = document.getElementById("surprise-overlay");
-      const colors = ["#ff5fad", "#ffe45c", "#7cf7ff", "#b28cff", "#7cff9d"];
-      for (let i = 0; i < 40; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confetto";
-        piece.style.background = colors[i % colors.length];
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.top = `${Math.random() * 30}%`;
-        piece.style.animationDelay = `${Math.random() * 0.4}s`;
-        overlay.appendChild(piece);
-        setTimeout(() => piece.remove(), 1900);
+        fileInput.onchange = function () {
+          if (fileInput.files && fileInput.files[0]) {
+            fileToDataUrl(fileInput.files[0])
+              .then(function (dataUrl) {
+                updated.imageData = dataUrl;
+                upsertCachedProfile(updated);
+              })
+              .catch(function () {
+                upsertCachedProfile(updated);
+              });
+
+            var fd = new FormData();
+            fd.append("name", newName);
+            fd.append("birthdate", newDate);
+            fd.append("image", fileInput.files[0]);
+
+            fetch(BASE_URL + "/profiles/" + id, {
+              method: "PUT",
+              body: fd
+            })
+              .then(function (res) {
+                if (res.ok) {
+                  setStatus("Profilo aggiornato.");
+                  syncFromServer();
+                } else {
+                  setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
+                }
+              })
+              .catch(function () {
+                setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
+              });
+          } else {
+            // Nessuna nuova immagine: mantieni quella vecchia
+            if (current.imageData) {
+              updated.imageData = current.imageData;
+            } else if (current.imageUrl) {
+              updated.imageUrl = current.imageUrl;
+            }
+            upsertCachedProfile(updated);
+
+            var fd2 = new FormData();
+            fd2.append("name", newName);
+            fd2.append("birthdate", newDate);
+
+            fetch(BASE_URL + "/profiles/" + id, {
+              method: "PUT",
+              body: fd2
+            })
+              .then(function (res2) {
+                if (res2.ok) {
+                  setStatus("Profilo aggiornato.");
+                  syncFromServer();
+                } else {
+                  setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
+                }
+              })
+              .catch(function () {
+                setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
+              });
+          }
+        };
+
+        fileInput.click();
       }
-    }
 
-    function showSurprise() {
-      const overlay = document.getElementById("surprise-overlay");
-      const messages = [
-        "🔥 Party mode attivato!", "🎁 Hai sbloccato la sorpresa segreta!", "✨ Sei una stella!", "🚀 Foto pronte al decollo!"
-      ];
-      overlay.textContent = messages[Math.floor(Math.random() * messages.length)];
-      overlay.classList.add("active");
-      sprinkleConfetti();
-      setTimeout(() => overlay.classList.remove("active"), 2400);
-    }
+      function deleteProfile(id) {
+        var ok = window.confirm("Sei sicuro di voler cancellare questo profilo?");
+        if (!ok) return;
 
-    function openModal(src, caption) {
-      const modal = document.getElementById("photo-modal");
-      const img = document.getElementById("modal-img");
-      const text = document.getElementById("modal-caption");
-      img.src = src;
-      text.textContent = caption;
-      modal.style.display = "flex";
-    }
+        removeCachedProfile(id);
 
-    function closeModal() {
-      document.getElementById("photo-modal").style.display = "none";
-    }
+        fetch(BASE_URL + "/profiles/" + id, {
+          method: "DELETE"
+        })
+          .then(function (res) {
+            if (res.ok) {
+              setStatus("Profilo eliminato.");
+              syncFromServer();
+            } else {
+              setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
+            }
+          })
+          .catch(function () {
+            setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
+          });
+      }
 
-    renderProfiles(loadCachedProfiles());
-    setStatus("Carico i profili...");
-    document.getElementById("surprise-btn").addEventListener("click", showSurprise);
-    createFallingGifs();
-    fetchProfiles();
+      function toggleMusic() {
+        if (!audioEl) return;
+        if (!isPlaying) {
+          audioEl.play().catch(function () {
+            // ignoriamo gli errori di autoplay
+          });
+          musicBtn.textContent = "⏸️ Pausa Musica";
+        } else {
+          audioEl.pause();
+          musicBtn.textContent = "▶️ Avvia Musica";
+        }
+        isPlaying = !isPlaying;
+      }
+
+      function ensureMusicOnInteraction() {
+        if (!isPlaying) {
+          toggleMusic();
+        }
+        document.body.removeEventListener("click", ensureMusicOnInteraction);
+      }
+
+      function createFallingGifs() {
+        fallingContainer.innerHTML = "";
+        for (var i = 0; i < GIFS.length; i++) {
+          var gif = GIFS[i];
+          var img = document.createElement("img");
+          img.className = "falling-gif";
+          img.src = gif.src;
+          img.alt = gif.alt;
+          img.loading = "lazy";
+          img.style.left = (8 + i * 18) % 100 + "%";
+          img.style.animationDuration = (8 + (i % 3) * 2) + "s";
+          img.style.animationDelay = (i * 1.4) + "s";
+          fallingContainer.appendChild(img);
+        }
+      }
+
+      function restartGifs() {
+        createFallingGifs();
+        setStatus("GIF ricaricate 🎉");
+      }
+
+      function sprinkleConfetti() {
+        var overlay = document.getElementById("surprise-overlay");
+        var colors = ["#ff5fad", "#ffe45c", "#7cf7ff", "#b28cff", "#7cff9d"];
+        for (var i = 0; i < 40; i++) {
+          var piece = document.createElement("div");
+          piece.className = "confetto";
+          piece.style.background = colors[i % colors.length];
+          piece.style.left = Math.random() * 100 + "%";
+          piece.style.top = Math.random() * 30 + "%";
+          piece.style.animationDelay = (Math.random() * 0.4) + "s";
+          overlay.appendChild(piece);
+          (function (node) {
+            setTimeout(function () { node.parentNode && node.parentNode.removeChild(node); }, 1900);
+          })(piece);
+        }
+      }
+
+      function showSurprise() {
+        var overlay = document.getElementById("surprise-overlay");
+        var messages = [
+          "🔥 Party mode attivato!",
+          "🎁 Hai sbloccato la sorpresa segreta!",
+          "✨ Sei una stella!",
+          "🚀 Foto pronte al decollo!"
+        ];
+        var idx = Math.floor(Math.random() * messages.length);
+        overlay.textContent = messages[idx];
+        overlay.classList.add("active");
+        sprinkleConfetti();
+        setTimeout(function () {
+          overlay.classList.remove("active");
+        }, 2400);
+      }
+
+      function openModal(src, caption) {
+        photoModalImg.src = src;
+        photoModalImg.alt = caption || "Foto profilo";
+        photoModalCaption.textContent = caption || "";
+        photoModal.style.display = "flex";
+      }
+
+      function closeModal() {
+        photoModal.style.display = "none";
+      }
+
+      // Event wiring
+      document.getElementById("profile-form").addEventListener("submit", handleFormSubmit);
+
+      galleryEl.addEventListener("click", function (evt) {
+        var target = evt.target;
+        if (!target) return;
+
+        var action = target.getAttribute("data-action");
+        if (!action && target.parentNode && target.parentNode.getAttribute) {
+          action = target.parentNode.getAttribute("data-action");
+        }
+
+        if (action === "edit") {
+          var id = target.getAttribute("data-id") || (target.parentNode && target.parentNode.getAttribute("data-id"));
+          if (id) editProfile(id);
+        } else if (action === "delete") {
+          var id2 = target.getAttribute("data-id") || (target.parentNode && target.parentNode.getAttribute("data-id"));
+          if (id2) deleteProfile(id2);
+        } else if (action === "zoom") {
+          var caption = target.getAttribute("data-caption") || "";
+          openModal(target.src, caption);
+        }
+      });
+
+      musicBtn.addEventListener("click", function () {
+        toggleMusic();
+      });
+
+      gifBtn.addEventListener("click", function () {
+        restartGifs();
+      });
+
+      surpriseBtn.addEventListener("click", function () {
+        showSurprise();
+      });
+
+      document.body.addEventListener("click", ensureMusicOnInteraction, { once: true });
+
+      photoModalClose.addEventListener("click", function () {
+        closeModal();
+      });
+
+      photoModal.addEventListener("click", function (evt) {
+        if (evt.target === photoModal) {
+          closeModal();
+        }
+      });
+
+      // Inizializzazione
+      renderProfiles(loadCachedProfiles());
+      setStatus("Carico i profili salvati...");
+      createFallingGifs();
+      syncFromServer();
+    })();
   </script>
 </body>
 </html>
