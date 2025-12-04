@@ -86,6 +86,26 @@
       filter: drop-shadow(0 0 6px #ffffffaa);
     }
 
+    #surprise-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 0 16px #000;
+      background: radial-gradient(circle, #00000040 0%, #000000cc 80%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 2;
+    }
+
+    #surprise-overlay.active {
+      opacity: 1;
+    }
+
     @keyframes fall {
       0% {
         transform: translateY(0);
@@ -130,27 +150,39 @@
     <button type="submit">Carica</button>
   </form>
 
+  <div style="text-align: center; margin-top: 1rem;">
+    <button id="surprise-btn" style="padding: 0.5rem 1rem; font-size: 1rem;">🎁 Sorpresa</button>
+  </div>
+
   <p id="status" style="text-align: center; color: white; font-weight: bold;"></p>
 
   <div class="gallery" id="gallery"></div>
 
   <!-- 🎉 GIF che cascano dall’alto -->
-  <div class="falling-gifs">
-    <img class="falling-gif" src="https://media.tenor.com/A-jbUUs6UhoAAAAi/pixel-stars.gif" style="left: 8%;" alt="Pixel stars" />
-    <img class="falling-gif" src="https://media.tenor.com/DfWv0biRwKoAAAAi/confetti.gif" style="left: 28%; animation-delay: 2s;" alt="Arcobaleno di coriandoli" />
-    <img class="falling-gif" src="https://media.tenor.com/y2JXkY1pXkwAAAAi/cat-computer.gif" style="left: 48%; animation-delay: 4s;" alt="Gatto hacker" />
-    <img class="falling-gif" src="https://media.tenor.com/-_f3qmrz9LEAAAAi/party-dinosaur.gif" style="left: 68%; animation-delay: 6s;" alt="Dinosauro festaiolo" />
-    <img class="falling-gif" src="https://media.tenor.com/PyWldxZjOeMAAAAi/party-hat-confetti.gif" style="left: 88%; animation-delay: 8s;" alt="Cappellino di festa" />
-  </div>
+  <div class="falling-gifs" id="falling-container"></div>
+
+  <div id="surprise-overlay" aria-live="polite"></div>
 
   <script>
     const BASE_URL = "https://galleria-profilo.onrender.com";
     const CACHE_KEY = "galleria-profiles-cache";
+    const GIFS = [
+      { src: "https://media4.giphy.com/media/3oEjHP8ELRNNlnlLGM/giphy.gif", alt: "Snoop Dogg groove" },
+      { src: "https://media2.giphy.com/media/l41YveCQzZJ5hL5CE/giphy.gif", alt: "Boom box dance" },
+      { src: "https://media2.giphy.com/media/3ov9jZrD2Xq0YJmF7y/giphy.gif", alt: "Coriandoli arcobaleno" },
+      { src: "https://media4.giphy.com/media/3o7aD5tv1ogNBtDhDi/giphy.gif", alt: "Laser party" },
+      { src: "https://media4.giphy.com/media/xTiTnr77ntMy0b6pS4/giphy.gif", alt: "Dab spaziale" }
+    ];
 
     function setStatus(message, isError = false) {
       const status = document.getElementById("status");
       status.textContent = message;
       status.style.color = isError ? "#ffdddd" : "#ddffdd";
+    }
+
+    function sanitizeText(text) {
+      if (!text) return "";
+      return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     }
 
     function loadCachedProfiles() {
@@ -265,8 +297,9 @@
           setStatus("Profilo salvato sul server e in locale.");
           fetchProfiles();
         } else {
-          const errorText = await res.text().catch(() => "");
-          setStatus(`Errore server (${res.status}). Salvo solo in locale. ${errorText}`, true);
+          const errorText = sanitizeText(await res.text().catch(() => ""));
+          const hint = res.status === 404 ? "Assicurati che il backend sia in esecuzione (POST /profiles)." : "";
+          setStatus(`Errore server (${res.status}). Salvo solo in locale. ${hint} ${errorText}`.trim(), true);
         }
       } catch (err) {
         console.error("Upload fallito", err);
@@ -370,8 +403,34 @@
       isPlaying = !isPlaying;
     }
 
+    function createFallingGifs() {
+      const container = document.getElementById("falling-container");
+      container.innerHTML = "";
+      GIFS.forEach((gif, i) => {
+        const img = document.createElement("img");
+        img.className = "falling-gif";
+        img.src = gif.src;
+        img.alt = gif.alt;
+        img.style.left = `${(i * 18 + 8) % 100}%`;
+        img.style.animationDelay = `${i * 1.5}s`;
+        container.appendChild(img);
+      });
+    }
+
+    function showSurprise() {
+      const overlay = document.getElementById("surprise-overlay");
+      const messages = [
+        "🔥 Party mode attivato!", "🎁 Hai sbloccato la sorpresa segreta!", "✨ Sei una stella!", "🚀 Foto pronte al decollo!"
+      ];
+      overlay.textContent = messages[Math.floor(Math.random() * messages.length)];
+      overlay.classList.add("active");
+      setTimeout(() => overlay.classList.remove("active"), 2500);
+    }
+
     renderProfiles(loadCachedProfiles());
     setStatus("Carico i profili...");
+    document.getElementById("surprise-btn").addEventListener("click", showSurprise);
+    createFallingGifs();
     fetchProfiles();
   </script>
 </body>

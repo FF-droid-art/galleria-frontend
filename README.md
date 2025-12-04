@@ -15,3 +15,4 @@ Interfaccia statica per caricare profili con nome, data e immagine. L'app salva 
 ## Note
 - L'endpoint del backend è configurato dentro `index.html` tramite la costante `BASE_URL`.
 - Se il backend non è raggiungibile, le immagini restano comunque visibili grazie alla cache locale.
+- Se il server risponde `404` su `/profiles`, avvia il backend o aggiorna `BASE_URL` verso l'URL corretto: i profili verranno comunque salvati localmente.
