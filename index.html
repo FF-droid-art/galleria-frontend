@@ -74,7 +74,7 @@
       width: 100vw;
       pointer-events: none;
       z-index: 3;
-      mix-blend-mode: screen;
+      mix-blend-mode: normal;
       overflow: hidden;
     }
 
@@ -154,10 +154,11 @@
   </audio>
 
   <!-- 🔘 Controllo musica -->
-  <div style="text-align: center; margin-top: 1rem;">
-    <button type="button" onclick="toggleMusic()" style="padding: 0.5rem 1rem; font-size: 1rem;">
+  <div style="text-align: center; margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+    <button id="music-btn" type="button" onclick="toggleMusic()" style="padding: 0.5rem 1rem; font-size: 1rem;">
       ▶️ Avvia Musica
     </button>
+    <button id="gif-btn" type="button" style="padding: 0.5rem 1rem; font-size: 1rem;" onclick="restartGifs()">✨ Mostra GIF</button>
   </div>
 
   <form id="profile-form">
@@ -178,18 +179,28 @@
   <!-- 🎉 GIF che cascano dall’alto -->
   <div class="falling-gifs" id="falling-container"></div>
 
+  <!-- 🖼️ Zoom foto -->
+  <div id="photo-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:5; align-items:center; justify-content:center; padding:1rem;">
+    <div style="position:relative; max-width:90vw; max-height:90vh;">
+      <button aria-label="Chiudi" onclick="closeModal()" style="position:absolute; top:-10px; right:-10px; background:#fff; border:none; border-radius:50%; width:34px; height:34px; box-shadow:0 0 8px #0008;">✖️</button>
+      <img id="modal-img" src="" alt="" style="max-width:100%; max-height:80vh; border-radius:1rem; box-shadow:0 0 12px #0009;" />
+      <div id="modal-caption" style="text-align:center; color:white; margin-top:0.5rem; font-size:1.1rem;"></div>
+    </div>
+  </div>
+
   <div id="surprise-overlay" aria-live="polite"></div>
 
   <script>
     const BASE_URL = "https://galleria-profilo.onrender.com";
     const CACHE_KEY = "galleria-profiles-cache";
     const FALLBACK_TILE = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%23ff00ff'/%3E%3Cstop offset='1' stop-color='%2300ffff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23g)' rx='28'/%3E%3Ctext x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' font-size='46' font-family='sans-serif' fill='white'%3EGIF%3C/text%3E%3C/svg%3E";
+    const INLINE_SNOOP = "data:image/gif;base64,R0lGODlhZABkAMQfAP//AP/MAP/LAP/KAP/JAP/GAP/EAOzZAP7uAP7sAP7rAP7qAP3oAPnmAPj+cAPfZAPTYAPDVAPDSAOTKAMzFAL+uAL2kAK2ZAI6IAH2BAGp9AF9zAE9mADdXACH5BAEAAB8ALAAAAGMAZAAAIw+HBIHEiwoMGDCBMqXMiwocOHECNKnEixosWLGDNq3Mix48ePIEOKHGkyJCHRlCkW+IIiTJuyYkOGjw48ZPGiSZMmTJkypGjx48eQI0q9mTopMmTKFMWu9Zn0FypkxZM6rVq0qdSrWqVevYtGmzp8+fQIMq/aq1q9evYMOKHUu2bN26FdeuXMmzp8+fQIMq3cu3at0kdG3cs0O//2LNu3crXcvXgwYMGCiwocOHECNKnEixosWLGDNq3Mix48ePIEOKnEmzps6fQIMqXEm0qtSrUq1q3cq1K9evYMOK3Em3bt26dOrXEm3bt33w48efiwo0qNEixosWLGDNq3Mix48ePIEOKnEmzps2bNnKv0/ebdGzZubNmzZs2bNmyZ2Wo2bNmzZv4nAgA7";
     const GIFS = [
-      { src: "https://media.tenor.com/4P02J6D_RLcAAAAd/snoop-dogg-dance.gif", alt: "Snoop Dogg party" },
-      { src: "https://media.tenor.com/LbZ2uyT_utAAAAAd/dancing-80s.gif", alt: "Boom box dance" },
-      { src: "https://media.tenor.com/z7QnZzmbL1sAAAAC/confetti-rainbow.gif", alt: "Coriandoli arcobaleno" },
-      { src: "https://media.tenor.com/Ruxtxdy5i-8AAAAd/laser-lights.gif", alt: "Laser party" },
-      { src: "https://media.tenor.com/hYp7Z4dZpI4AAAAd/dab-dance.gif", alt: "Dab spaziale" }
+      { src: INLINE_SNOOP, alt: "Snoop Dogg party" },
+      { src: "https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif", alt: "Confetti" },
+      { src: "https://media.giphy.com/media/26FPqut4z4So4gDOU/giphy.gif", alt: "Boom box dance" },
+      { src: "https://media.giphy.com/media/3o7aD4VDkp0vN9XXoQ/giphy.gif", alt: "Laser lights" },
+      { src: "https://media.giphy.com/media/l41lFw057lAJQMwg0/giphy.gif", alt: "Funky dab" }
     ];
 
     function setStatus(message, isError = false) {
@@ -230,6 +241,7 @@
           <button onclick="editProfile('${profile.id}', '${profile.name}', '${profile.birthdate}')">Modifica</button>
           <button onclick="deleteProfile('${profile.id}')">❌ Cancella</button>
         `;
+        div.querySelector("img").addEventListener("click", () => openModal(imgSrc, profile.name));
         gallery.appendChild(div);
       });
     }
@@ -407,7 +419,7 @@
     let isPlaying = false;
     function toggleMusic() {
       const audio = document.getElementById("bg-music");
-      const btn = document.querySelector("button[onclick='toggleMusic()']");
+      const btn = document.getElementById("music-btn");
       if (!isPlaying) {
         audio.play();
         btn.textContent = "⏸️ Pausa Musica";
@@ -417,6 +429,14 @@
       }
       isPlaying = !isPlaying;
     }
+
+    function ensureMusicOnInteraction() {
+      if (isPlaying) return;
+      toggleMusic();
+      document.body.removeEventListener("click", ensureMusicOnInteraction);
+    }
+
+    document.body.addEventListener("click", ensureMusicOnInteraction, { once: true });
 
     function createFallingGifs() {
       const container = document.getElementById("falling-container");
@@ -434,8 +454,14 @@
           img.onerror = null;
           img.src = FALLBACK_TILE;
         };
+        img.onload = () => img.style.opacity = "0.97";
         container.appendChild(img);
       });
+    }
+
+    function restartGifs() {
+      createFallingGifs();
+      setStatus("GIF ricaricate con la cascata in evidenza.");
     }
 
     function sprinkleConfetti() {
@@ -462,6 +488,19 @@
       overlay.classList.add("active");
       sprinkleConfetti();
       setTimeout(() => overlay.classList.remove("active"), 2400);
+    }
+
+    function openModal(src, caption) {
+      const modal = document.getElementById("photo-modal");
+      const img = document.getElementById("modal-img");
+      const text = document.getElementById("modal-caption");
+      img.src = src;
+      text.textContent = caption;
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("photo-modal").style.display = "none";
     }
 
     renderProfiles(loadCachedProfiles());
