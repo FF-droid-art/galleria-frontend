@@ -73,15 +73,17 @@
       left: 0;
       width: 100vw;
       pointer-events: none;
-      z-index: -1;
+      z-index: 1;
+      mix-blend-mode: screen;
     }
 
     .falling-gif {
       position: absolute;
       top: -150px;
-      animation: fall 10s linear infinite;
-      height: 100px;
-      opacity: 0.8;
+      animation: fall 12s linear infinite;
+      height: 120px;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 6px #ffffffaa);
     }
 
     @keyframes fall {
@@ -128,28 +130,56 @@
     <button type="submit">Carica</button>
   </form>
 
+  <p id="status" style="text-align: center; color: white; font-weight: bold;"></p>
+
   <div class="gallery" id="gallery"></div>
 
   <!-- 🎉 GIF che cascano dall’alto -->
   <div class="falling-gifs">
-    <img class="falling-gif" src="https://media.giphy.com/media/sIIhZliB2McAo/giphy.gif" style="left: 10%;" alt="Nyan Cat" />
-    <img class="falling-gif" src="https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif" style="left: 30%; animation-delay: 3s;" alt="Snoop Dancing" />
-    <img class="falling-gif" src="https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif" style="left: 50%; animation-delay: 6s;" alt="Cool Party" />
-    <img class="falling-gif" src="https://media.giphy.com/media/j5QcmXoFWl9yQ/giphy.gif" style="left: 70%; animation-delay: 1s;" alt="Happy Dance" />
-    <img class="falling-gif" src="https://media.giphy.com/media/l0MYB8Ory7Hqefo9a/giphy.gif" style="left: 90%; animation-delay: 5s;" alt="Stars Falling" />
+    <img class="falling-gif" src="https://media.tenor.com/A-jbUUs6UhoAAAAi/pixel-stars.gif" style="left: 8%;" alt="Pixel stars" />
+    <img class="falling-gif" src="https://media.tenor.com/DfWv0biRwKoAAAAi/confetti.gif" style="left: 28%; animation-delay: 2s;" alt="Arcobaleno di coriandoli" />
+    <img class="falling-gif" src="https://media.tenor.com/y2JXkY1pXkwAAAAi/cat-computer.gif" style="left: 48%; animation-delay: 4s;" alt="Gatto hacker" />
+    <img class="falling-gif" src="https://media.tenor.com/-_f3qmrz9LEAAAAi/party-dinosaur.gif" style="left: 68%; animation-delay: 6s;" alt="Dinosauro festaiolo" />
+    <img class="falling-gif" src="https://media.tenor.com/PyWldxZjOeMAAAAi/party-hat-confetti.gif" style="left: 88%; animation-delay: 8s;" alt="Cappellino di festa" />
   </div>
 
   <script>
-    async function fetchProfiles() {
-      const res = await fetch("https://galleria-profilo.onrender.com/profiles");
-      const profiles = await res.json();
+    const BASE_URL = "https://galleria-profilo.onrender.com";
+    const CACHE_KEY = "galleria-profiles-cache";
+
+    function setStatus(message, isError = false) {
+      const status = document.getElementById("status");
+      status.textContent = message;
+      status.style.color = isError ? "#ffdddd" : "#ddffdd";
+    }
+
+    function loadCachedProfiles() {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        return cached ? JSON.parse(cached) : [];
+      } catch (err) {
+        console.error("Errore nel leggere la cache", err);
+        return [];
+      }
+    }
+
+    function cacheProfiles(profiles) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(profiles));
+      } catch (err) {
+        console.error("Errore nel salvare la cache", err);
+      }
+    }
+
+    function renderProfiles(profiles) {
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "";
       profiles.forEach(profile => {
+        const imgSrc = profile.imageData || `${BASE_URL}${profile.imageUrl}`;
         const div = document.createElement("div");
         div.className = "profile";
         div.innerHTML = `
-          <img src="https://galleria-profilo.onrender.com${profile.imageUrl}" alt="${profile.name}" />
+          <img src="${imgSrc}" alt="${profile.name}" />
           <div><strong>${profile.name}</strong></div>
           <div>${profile.birthdate}</div>
           <button onclick="editProfile('${profile.id}', '${profile.name}', '${profile.birthdate}')">Modifica</button>
@@ -159,27 +189,99 @@
       });
     }
 
+    function upsertCachedProfile(profile) {
+      const cached = loadCachedProfiles();
+      const idx = cached.findIndex(p => p.id === profile.id);
+      if (idx >= 0) {
+        cached[idx] = { ...cached[idx], ...profile };
+      } else {
+        cached.unshift(profile);
+      }
+      cacheProfiles(cached);
+      renderProfiles(cached);
+    }
+
+    async function fetchProfiles() {
+      try {
+        const res = await fetch(`${BASE_URL}/profiles`);
+        if (!res.ok) throw new Error("Richiesta non riuscita");
+        const profiles = await res.json();
+        const cached = loadCachedProfiles();
+        const merged = profiles.map(p => {
+          const cachedProfile = cached.find(c => c.id === p.id);
+          return cachedProfile && cachedProfile.imageData ? { ...p, imageData: cachedProfile.imageData } : p;
+        });
+        cacheProfiles(merged);
+        renderProfiles(merged);
+        setStatus("Profili sincronizzati con il server.");
+      } catch (err) {
+        const cached = loadCachedProfiles();
+        if (cached.length) {
+          renderProfiles(cached);
+          setStatus("Server non raggiungibile: sto mostrando i profili salvati in locale.", true);
+        } else {
+          setStatus("Errore nel caricamento dei profili. Riprova più tardi oppure verifica il backend.", true);
+        }
+        console.error(err);
+      }
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
     document.getElementById("profile-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const form = e.target;
       const formData = new FormData(form);
+      const name = formData.get("name");
+      const birthdate = formData.get("birthdate");
+      const imageFile = formData.get("image");
 
-      const res = await fetch("https://galleria-profilo.onrender.com/profiles", {
-        method: "POST",
-        body: formData
-      });
-
-      if (res.ok) {
-        fetchProfiles();
-        form.reset();
-      } else {
-        alert("Errore durante il caricamento del profilo.");
+      let imageData;
+      try {
+        imageData = await fileToDataUrl(imageFile);
+      } catch (err) {
+        alert("Errore nel leggere l'immagine.");
+        return;
       }
+
+      let createdProfile = { id: `local-${Date.now()}`, name, birthdate, imageData };
+
+      try {
+        const res = await fetch(`${BASE_URL}/profiles`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (res.ok) {
+          const savedProfile = await res.json().catch(() => ({}));
+          createdProfile = { ...savedProfile, name, birthdate, imageData };
+          setStatus("Profilo salvato sul server e in locale.");
+          fetchProfiles();
+        } else {
+          const errorText = await res.text().catch(() => "");
+          setStatus(`Errore server (${res.status}). Salvo solo in locale. ${errorText}`, true);
+        }
+      } catch (err) {
+        console.error("Upload fallito", err);
+        setStatus("Server non raggiungibile, profilo salvato solo in locale.", true);
+      }
+
+      upsertCachedProfile(createdProfile);
+      form.reset();
     });
 
     async function editProfile(id, currentName, currentDate) {
       const name = prompt("Modifica nome:", currentName);
+      if (!name) return;
       const birthdate = prompt("Modifica data di nascita (YYYY-MM-DD):", currentDate);
+      if (!birthdate) return;
 
       const formData = new FormData();
       formData.append("name", name);
@@ -192,17 +294,30 @@
       fileInput.onchange = async () => {
         if (fileInput.files.length > 0) {
           formData.append("image", fileInput.files[0]);
+          try {
+            const imageData = await fileToDataUrl(fileInput.files[0]);
+            upsertCachedProfile({ id, name, birthdate, imageData });
+          } catch (err) {
+            console.error("Impossibile aggiornare l'immagine in cache", err);
+          }
         }
 
-        const res = await fetch(`https://galleria-profilo.onrender.com/profiles/${id}`, {
-          method: "PUT",
-          body: formData
-        });
+        upsertCachedProfile({ id, name, birthdate });
 
-        if (res.ok) {
-          fetchProfiles();
-        } else {
-          alert("Errore durante la modifica del profilo.");
+        try {
+          const res = await fetch(`${BASE_URL}/profiles/${id}`, {
+            method: "PUT",
+            body: formData
+          });
+
+          if (res.ok) {
+            setStatus("Profilo aggiornato.");
+            fetchProfiles();
+          } else {
+            setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
+          }
+        } catch (err) {
+          setStatus("Aggiornamento solo in locale (server non raggiungibile).", true);
         }
       };
 
@@ -211,13 +326,22 @@
 
     async function deleteProfile(id) {
       if (confirm("Sei sicuro di voler cancellare questo profilo?")) {
-        const res = await fetch(`https://galleria-profilo.onrender.com/profiles/${id}`, {
-          method: "DELETE"
-        });
-        if (res.ok) {
-          fetchProfiles();
-        } else {
-          alert("Errore durante la cancellazione.");
+        const cached = loadCachedProfiles().filter(p => p.id !== id);
+        cacheProfiles(cached);
+        renderProfiles(cached);
+
+        try {
+          const res = await fetch(`${BASE_URL}/profiles/${id}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            setStatus("Profilo eliminato.");
+            fetchProfiles();
+          } else {
+            setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
+          }
+        } catch (err) {
+          setStatus("Profilo eliminato solo in locale (server non raggiungibile).", true);
         }
       }
     }
@@ -236,6 +360,8 @@
       isPlaying = !isPlaying;
     }
 
+    renderProfiles(loadCachedProfiles());
+    setStatus("Carico i profili...");
     fetchProfiles();
   </script>
 </body>
